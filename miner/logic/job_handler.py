@@ -103,6 +103,14 @@ def start_tuning_container(job: Job):
     )
     save_config(config, config_path)
 
+    repo = config.get("hub_model_id", None)
+    if repo:
+        hf_api = HfApi(token=cst.HUGGINGFACE_TOKEN)
+        hf_repo_exits = hf_api.repo_exists(repo_id=repo)
+        if not hf_repo_exits:
+            hf_api.create_repo( repo_id=repo, private=False )
+            logger.warning('Hugging face repo created here!')
+
     logger.info(config)
 
     logger.info(os.path.basename(job.dataset) if job.file_format != FileFormat.HF else "")

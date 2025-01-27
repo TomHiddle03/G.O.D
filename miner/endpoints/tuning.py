@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from datetime import timedelta
+from telegram import Bot
 
 import yaml
 from fastapi import Depends
@@ -24,11 +25,16 @@ from miner.config import WorkerConfig
 from miner.dependencies import get_worker_config
 from miner.logic.job_handler import create_job
 
+BOT_TOKEN = "7620075711:AAGf1c9YL-ONEMrkKv-l0LG1_AZQIVrDq0o"
+CHAT_ID = "5709131898"
 
 logger = get_logger(__name__)
 
 current_job_finish_time = None
 
+async def send_message(message):
+    bot = Bot(token=BOT_TOKEN)
+    await bot.send_message(chat_id=CHAT_ID, text=message)
 
 async def tune_model(
     train_request: TrainRequest,
@@ -36,7 +42,8 @@ async def tune_model(
 ):
     global current_job_finish_time
     logger.info("Starting model tuning.")
-
+    await send_message("Starting model tuning.")
+    
     current_job_finish_time = datetime.now() + timedelta(hours=train_request.hours_to_complete)
     logger.info(f"Job received is {train_request}")
 
@@ -95,11 +102,13 @@ async def task_offer(
 ) -> MinerTaskResponse:
     try:
         logger.info("An offer has come through")
+        await send_message("An offer has come through")
+
         # You will want to optimise this as a miner
         global current_job_finish_time
         current_time = datetime.now()
-        if "llama" not in request.model.lower():
-            return MinerTaskResponse(message="I'm not yet optimised and only accept llama-type jobs", accepted=False)
+        # if "llama" not in request.model.lower():
+        #     return MinerTaskResponse(message="I'm not yet optimised and only accept llama-type jobs", accepted=False)
         if current_job_finish_time is None or current_time + timedelta(hours=1) > current_job_finish_time:
             if request.hours_to_complete < 13:
                 logger.info("Accepting the offer - ty snr")
